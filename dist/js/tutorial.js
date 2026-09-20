@@ -12,15 +12,14 @@ export const tutorialSteps=[
   {id:'members',title:'点开一个阵营',body:'高亮的是一个阵营。点击它可以查看成员；阵营也支持拖动和一键整理。',target:'[data-group-node="guide-f1"]',event:'faction-selected'},
   {id:'done',title:'现在可以开始自己的故事了',body:'从这里新建或导入自己的图谱。侧栏的“导出”可以保存 JSON 备份。点击完成，回到原来的工作区。',target:'#sidebar',interactive:'.section-toggle',event:null}
 ];
-export function practiceBoard(locale='zh'){
-  const en=locale==='en';
-  return {id:'guide-board',name:en?'Practice atlas':'练习图谱',kind:'其他',description:'',characters:[
-    {id:'guide-a',name:en?'Lin':'小林',alias:'LIN',role:en?'Explorer':'探索者',notes:'',x:0,y:0,color:'#708f87'},
-    {id:'guide-b',name:en?'Yao':'小遥',alias:'YAO',role:en?'Archivist':'记录员',notes:'',x:240,y:80,color:'#7b86a4'},
-    {id:'guide-c',name:en?'Lan':'小岚',alias:'LAN',role:en?'Navigator':'领航员',notes:'',x:-130,y:210,color:'#708f87'}
-  ],relations:[{id:'guide-r1',source:'guide-a',target:'guide-c',label:en?'Travel companions':'旅伴',kind:'cooperation',directed:false,notes:''}],factions:[
-    {id:'guide-f1',name:en?'Explorers':'探索小队',description:'',color:'#708f87',members:['guide-a','guide-c'],x:0,y:0},
-    {id:'guide-f2',name:en?'Archives':'档案馆',description:'',color:'#7b86a4',members:['guide-b'],x:330,y:100}
+export function practiceBoard(){
+  return {id:'guide-board',name:'练习图谱',kind:'其他',description:'',characters:[
+    {id:'guide-a',name:'小林',alias:'LIN',role:'探索者',notes:'',x:0,y:0,color:'#708f87'},
+    {id:'guide-b',name:'小遥',alias:'YAO',role:'记录员',notes:'',x:240,y:80,color:'#7b86a4'},
+    {id:'guide-c',name:'小岚',alias:'LAN',role:'领航员',notes:'',x:-130,y:210,color:'#708f87'}
+  ],relations:[{id:'guide-r1',source:'guide-a',target:'guide-c',label:'旅伴',kind:'cooperation',directed:false,notes:''}],factions:[
+    {id:'guide-f1',name:'探索小队',description:'',color:'#708f87',members:['guide-a','guide-c'],x:0,y:0},
+    {id:'guide-f2',name:'档案馆',description:'',color:'#7b86a4',members:['guide-b'],x:330,y:100}
   ]};
 }
 function browserStorage(){try{return globalThis.localStorage;}catch{return undefined;}}

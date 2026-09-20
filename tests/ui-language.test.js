@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import * as i18n from '../dist/js/i18n.js';
 import * as tutorial from '../dist/js/tutorial.js';
 import * as model from '../dist/js/model.js';
+import * as demoMigration from '../dist/js/demo-migration.js';
 import * as icons from '../dist/js/icons.js';
 import * as layout from '../dist/js/layout.js';
 import * as factions from '../dist/js/factions.js';
@@ -31,7 +32,7 @@ const stored=new Map();stored.set(i18n.LANGUAGE_KEY,locale);if(savedBoard)stored
 const storage={getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)};
 if(seen)storage.setItem(tutorial.TUTORIAL_KEY,'done');
 const spotlight={visible:false,show(step,html){this.step=step;this.html=html;this.visible=true;},hide(){this.visible=false;},schedule(){}};
-const context={Spotlight:class{constructor(){return spotlight;}},...i18n,...tutorial,initializeLanguage:(_,language)=>i18n.initializeLanguage(storage,language??'zh-CN'),setLanguage:lang=>i18n.setLanguage(lang,storage),hasSeenTutorial:()=>tutorial.hasSeenTutorial(storage),markTutorialSeen:()=>tutorial.markTutorialSeen(storage),...model,...icons,...layout,...cameraMath,...svgText,...factions,getFactionPositions:factions.factionPositions,hydrateIcons:()=>icons.hydrateIcons(document),e:model.escapeHtml,document,localStorage:{getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)},window:{innerWidth:1500,innerHeight:900,addEventListener(){}},ResizeObserver:class{observe(){}},requestAnimationFrame:fn=>{fn();return 1;},setTimeout:()=>1,clearTimeout(){},FormData:class{constructor(form){this.fields=form.fields??{};}get(k){return this.fields[k]??null;}has(k){return Object.hasOwn(this.fields,k);}getAll(k){return this.fields[k]??[];}},console};
+const context={Spotlight:class{constructor(){return spotlight;}},...i18n,...tutorial,initializeLanguage:(_,language)=>i18n.initializeLanguage(storage,language??'zh-CN'),setLanguage:lang=>i18n.setLanguage(lang,storage),hasSeenTutorial:()=>tutorial.hasSeenTutorial(storage),markTutorialSeen:()=>tutorial.markTutorialSeen(storage),...model,...demoMigration,...icons,...layout,...cameraMath,...svgText,...factions,getFactionPositions:factions.factionPositions,hydrateIcons:()=>icons.hydrateIcons(document),e:model.escapeHtml,document,localStorage:{getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)},window:{innerWidth:1500,innerHeight:900,addEventListener(){}},ResizeObserver:class{observe(){}},requestAnimationFrame:fn=>{fn();return 1;},setTimeout:()=>1,clearTimeout(){},FormData:class{constructor(form){this.fields=form.fields??{};}get(k){return this.fields[k]??null;}has(k){return Object.hasOwn(this.fields,k);}getAll(k){return this.fields[k]??[];}},console};
 const source=fs.readFileSync(new URL('../dist/js/app.js',import.meta.url),'utf8').replace(/^import .*?;\n/gm,'');
 vm.createContext(context);
 vm.runInContext(source+`\nthis.api={changeLanguage,showTutorial,finishTutorial,personModal,boardModal,factionModal,help,tour:()=>({tutorialOpen,tutorialStep}),relationModal,cameraArea,toggleDetail,openMenu,closeMenu,resetSelection,view:()=>view,factionFilter:()=>factionFilter,factionPositions,fit,zoom,clearFocus,resetZoom,resizeViewport,camera:()=>({...camera}),tidyLayout,board,selectPerson,beginConnection,chooseConnectionTarget,cancelConnection,saveConnection,handleAction,undo,render,peek:()=>({connectionDraft,selectedId,recentRelationId,history:history.length}),draft:fields=>Object.assign(connectionDraft,fields)};`,context);
@@ -39,19 +40,39 @@ return {a:context.api,document,storage,context,documentListeners,spotlight};
 }
 const visibleText=html=>html.replace(/<button\b[^>]*lang="zh-CN"[^>]*>.*?<\/button>/g,'').replace(/<[^>]*>/g,'');
 const assertEnglish=html=>{assert.doesNotMatch(html,/\$\{t\(/);assert.doesNotMatch(visibleText(html),/[\u4e00-\u9fff]/);};
-test('English UI covers generated graph, details, editors, help, and empty states',()=>{
+test('reopening an unchanged English seed restores Chinese and saves without changing UI language',()=>{
+  const saved=JSON.parse(fs.readFileSync(new URL('./fixtures/legacy-english-demo.json',import.meta.url),'utf8'));
+  const {a,storage}=app({locale:'en',savedBoard:saved});
+  assert.equal(a.board().characters[0].name,'林雾');
+  const persisted=JSON.parse(storage.getItem(model.STORAGE_KEY)).boards[0];
+  assert.equal(persisted.name,'雾港档案');
+  assert.equal(storage.getItem(i18n.LANGUAGE_KEY),'en');
+  const reopened=app({locale:'en',savedBoard:persisted});
+  assert.deepEqual(JSON.parse(JSON.stringify(reopened.a.board())),persisted);
+  saved.characters[0].notes='My edited notes';
+  const edited=app({locale:'en',savedBoard:saved});
+  assert.deepEqual(JSON.parse(JSON.stringify(edited.a.board())),saved);
+});
+test('English UI keeps Chinese demo content in graph, details and editors',()=>{
   const {a,document}=app();
+  const content=[];
+  const collect=value=>{if(typeof value==='string'&&/[\u4e00-\u9fff]/.test(value))content.push(value);else if(value&&typeof value==='object')Object.values(value).forEach(collect);};
+  collect(a.board());
+  const assertDemoUI=html=>{html=html.replace(/(<[^>]*class="(?:monogram|detail-avatar|relation-mini)"[^>]*>)[^<]*/g,'$1');for(const text of content.sort((a,b)=>b.length-a.length))html=html.replaceAll(model.escapeHtml(text),'');assertEnglish(html);};
+  assert.equal(a.board().name,'雾港档案');
+  assert.equal(a.board().characters[0].name,'林雾');
+  assert.match(document.querySelector('#scene').innerHTML,/林雾/);
   const html=selector=>document.querySelector(selector).innerHTML;
-  assertEnglish(html('#scene'));assertEnglish(html('#graph-stats'));
-  a.selectPerson('p1');assertEnglish(html('#detail'));assert.match(html('#detail'),/Edit profile/);
-  a.beginConnection();assertEnglish(html('#connection-bar'));
-  a.chooseConnectionTarget('p2');assertEnglish(html('#detail'));assertEnglish(html('#connection-bar'));
+  assertDemoUI(html('#scene'));assertDemoUI(html('#graph-stats'));
+  a.selectPerson('p1');assertDemoUI(html('#detail'));assert.match(html('#detail'),/Edit profile/);
+  a.beginConnection();assertDemoUI(html('#connection-bar'));
+  a.chooseConnectionTarget('p2');assertDemoUI(html('#detail'));assertDemoUI(html('#connection-bar'));
   assert.match(html('#detail'),/Save relation/);a.cancelConnection();
   for(const open of [()=>a.personModal(),()=>a.personModal('p1'),()=>a.relationModal(),()=>a.relationModal('r3'),()=>a.boardModal(),()=>a.boardModal(true),()=>a.factionModal('f1'),()=>a.help()]){
-    open();assertEnglish(html('#modal-content'));document.querySelector('#modal').close();
+    open();assertDemoUI(html('#modal-content'));document.querySelector('#modal').close();
   }
-  a.board().relations=[];a.selectPerson('p1');assertEnglish(html('#detail'));assert.match(html('#detail'),/No relations yet/);
-  a.resetSelection();a.board().characters=[];a.board().factions=[];a.render();assertEnglish(html('#empty-state'));
+  a.board().relations=[];a.selectPerson('p1');assertDemoUI(html('#detail'));assert.match(html('#detail'),/No relations yet/);
+  a.resetSelection();a.board().characters=[];a.board().factions=[];a.render();assertDemoUI(html('#empty-state'));
 });
 test('language changes preserve user content, graph state, draft, camera, and history',()=>{
   const saved=model.demoBoard();saved.relationTypes=[{id:'family',name:'亲情',color:'#8874a6'}];
@@ -168,7 +189,7 @@ test('changing tutorial language preserves an unfinished profile edit',()=>{
   const form=document.querySelector('#editor');form.fields={name:'未提交名字',alias:'ALIAS',role:'edited role',notes:'unsaved notes',color:'#708f87'};
   a.changeLanguage('zh');
   for(const field of ['name','alias','role','notes'])assert.equal(document.querySelector('#editor [name="'+field+'"]').value,form.fields[field]);
-  assert.equal(a.tour().tutorialStep,2);assert.equal(a.board().characters[0].name,'Lin');
+  assert.equal(a.tour().tutorialStep,2);assert.equal(a.board().characters[0].name,'小林');
   a.finishTutorial();
 });
 test('finishing during an asynchronous practice layout cannot overwrite the restored atlas',async()=>{

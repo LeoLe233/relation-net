@@ -1,4 +1,5 @@
 import {SCHEMA_VERSION,STORAGE_KEY,colors,CUSTOM_KIND,relationKind,prepareRelationKind,MAX_CHARACTER_FIELDS,prepareCharacterTemplate,validateCharacterAttributes,setCharacterTemplate,uid,clone,escapeHtml as e,demoBoard,createBoard,neighborhood,removeCharacter,exportBoard,validateImport,factionHull} from './model.js';
+import {restoreChineseDemo} from './demo-migration.js';
 import {icon,hydrateIcons} from './icons.js';
 import {t,getLanguage,setLanguage,initializeLanguage,applyTranslations} from './i18n.js';
 import {tutorialSteps,practiceBoard,hasSeenTutorial,markTutorialSeen} from './tutorial.js';
@@ -16,7 +17,8 @@ try {
   const raw=localStorage.getItem(STORAGE_KEY);
   if(raw){const parsed=JSON.parse(raw);if(parsed.version!==SCHEMA_VERSION||!Array.isArray(parsed.boards)||!parsed.boards.length)throw Error('invalid');data={version:SCHEMA_VERSION,boards:parsed.boards.map(board=>validateImport({format:'relation-net',version:SCHEMA_VERSION,board})),activeId:parsed.activeId};}
 } catch {storageBlocked=true;loadWarning='无法读取已保存的数据。原始数据已保留；本次修改请使用导出保存。';}
-if(!data){const demo=demoBoard(getLanguage());data={version:SCHEMA_VERSION,activeId:demo.id,boards:[demo]};}
+if(data)data.boards=data.boards.map(restoreChineseDemo);
+if(!data){const demo=demoBoard();data={version:SCHEMA_VERSION,activeId:demo.id,boards:[demo]};}
 if(!data.boards.some(b=>b.id===data.activeId))data.activeId=data.boards[0].id;
 let selectedId=null,selected=new Set(),multi=false,factionFilter=null,query='',view='people',history=[],toastTimer;
 let camera={x:0,y:0,k:1},gesture=null,dragged=false,frame=null;
@@ -457,7 +459,7 @@ function showTutorial(){
   if(layoutBusy||gesture){toast(t('请等当前操作完成，再开始教程。'));return;}
   tourSession={data,history,selectedId,selected:new Set(selected),multi,factionFilter,query,view,camera:{...camera},area:cameraArea(),preFocusCamera,detailsExpanded,touchMove,connectionEditing,connectionDraft,menuOpen:$('#sidebar').classList.contains('open'),sections:[...document.querySelectorAll('[data-sidebar-toggle]')].map(button=>({button,expanded:button.getAttribute('aria-expanded')})),saveKey:$('#save-status').dataset.i18n};
   if(modal.open)modal.close();
-  tutorialOpen=true;history=[];const practice=practiceBoard(getLanguage());
+  tutorialOpen=true;history=[];const practice=practiceBoard();
   data={version:SCHEMA_VERSION,activeId:practice.id,boards:[practice]};
   clearTimeout(toastTimer);$('#toast').hidden=true;
   spotlight??=new Spotlight({onAction:action=>{

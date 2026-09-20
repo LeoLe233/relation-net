@@ -56,7 +56,7 @@ export function setCharacterTemplate(board,fields) {
   }
 }
 export const escapeHtml = x => String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function demoBoard(locale='zh') {
+export function demoBoard() {
   const board = {
     id:uid(), name:'雾港档案', kind:'游戏', description:'一座被浓雾包围的港城，三方势力与十二位人物。全部人物与关系均为原创演示，可自由编辑。',
     characters:[
@@ -78,30 +78,6 @@ export function demoBoard(locale='zh') {
       ['p1','p2','共同调查','cooperation',false],['p1','p3','研究搭档','cooperation',false],['p1','p4','指导','cooperation',true],['p1','p5','儿时好友','other',false],['p1','p10','交换线索','cooperation',false],['p2','p9','理念分歧','conflict',false],['p3','p6','技术协作','cooperation',false],['p5','p6','同盟','cooperation',false],['p6','p7','邻里互助','cooperation',false],['p7','p8','照顾','other',true],['p8','p12','秘密联络','other',false],['p9','p10','指挥','other',true],['p10','p11','行动搭档','cooperation',false],['p11','p12','情报协作','cooperation',false],['p5','p9','立场对立','conflict',false],['p4','p8','朋友','other',false]
     ].map(([source,target,label,kind,directed],i)=>({id:'r'+i,source,target,label,kind,directed,notes:''}))
   };
-  // Translate only a newly created demo, never saved or imported user content.
-  if(locale==='en'){
-    board.name='Fog Harbor Archives';
-    board.description='A fogbound port city, three factions, and twelve characters. This original fictional demo is yours to explore and edit.';
-    const people=[
-      ['Lin Wu','Lighthouse keeper','Records unusual tides in the harbor. Raised in the old port, Lin now works for the Lighthouse Council and keeps ties across factions.'],
-      ['Shen Yan','Council archivist','Keeps the lighthouse archives and believes every relationship holds a clue to the city’s past.'],
-      ['Bai Yu','Tidal researcher','Studies the connection between fog and tides. Investigates the lighthouse blackout with Lin Wu.'],
-      ['Shi Yu','Apprentice keeper','A new Council member learning the history of the harbor from Lin Wu.'],
-      ['Lu Chuan','Harbor navigator','Knows every waterway and has been Lin Wu’s friend since childhood. Always stands with the old port residents.'],
-      ['Jiang Yu','Dockyard mechanic','Restores abandoned boats and sometimes repairs equipment for the Investigation Bureau.'],
-      ['Wen Lan','Neighborhood doctor','Runs the old port’s only clinic and treats people from every faction.'],
-      ['A Che','Harbor courier','Travels between the old port and the lighthouse, carrying stories that never reach the archives.'],
-      ['Gu Yuan','Bureau director','Believes the Bureau should oversee harbor security, putting Gu at odds with the Council.'],
-      ['Cheng Mo','Field investigator','Investigates unusual incidents while balancing duty with personal trust.'],
-      ['Xu Yao','Intelligence analyst','Connects scattered clues to build a complete picture.'],
-      ['Wen Xi','Radio operator','Monitors signals from beyond the harbor and keeps secret contact with the old port courier.']
-    ];
-    board.characters.forEach((p,i)=>{[p.name,p.role,p.notes]=people[i];});
-    const groups=[['Lighthouse Council','Guards the lighthouse and studies the city’s past.'],['Old Port Alliance','A mutual aid group formed by harbor residents.'],['Grayline Bureau','Investigates unusual incidents in Fog Harbor.']];
-    board.factions.forEach((f,i)=>{[f.name,f.description]=groups[i];});
-    const labels=['Joint investigation','Research partners','Mentors','Childhood friends','Share clues','Ideological dispute','Technical support','Allies','Neighborly help','Cares for','Secret contact','Commands','Field partners','Share intelligence','Opposing sides','Friends'];
-    board.relations.forEach((r,i)=>{r.label=labels[i];});
-  }
   return board;
 }
 export const createBoard = ({name,kind='书籍',description=''}) => ({id:uid(),name,kind,description,characters:[],relations:[],factions:[]});

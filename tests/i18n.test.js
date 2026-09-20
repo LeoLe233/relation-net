@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {english,LANGUAGE_KEY,initializeLanguage,setLanguage,t,applyTranslations} from '../dist/js/i18n.js';
-import {tutorialSteps,TUTORIAL_KEY,hasSeenTutorial,markTutorialSeen} from '../dist/js/tutorial.js';
+import {practiceBoard,tutorialSteps,TUTORIAL_KEY,hasSeenTutorial,markTutorialSeen} from '../dist/js/tutorial.js';
 import {demoBoard,exportBoard,validateImport} from '../dist/js/model.js';
 
 const memory=()=>{const items=new Map();return {getItem:key=>items.get(key),setItem:(key,value)=>items.set(key,value)};};
@@ -41,13 +41,14 @@ test('translation touches only marked UI text and attributes',()=>{
   assert.equal(label.textContent,'Add character');assert.equal(search.attrs.placeholder,'Find a character…');
   assert.equal(userText.textContent,'人物档案');
 });
-test('English demo is valid v1 data and localization does not mutate other demos',()=>{
-  const chinese=demoBoard(),snapshot=JSON.stringify(chinese),englishDemo=demoBoard('en');
-  assert.equal(chinese.name,'雾港档案');assert.equal(englishDemo.name,'Fog Harbor Archives');
-  assert.deepEqual(validateImport(exportBoard(englishDemo)),englishDemo);
-  assert.equal(JSON.stringify(chinese),snapshot);
-  assert.deepEqual(englishDemo.characters.map(p=>[p.id,p.x,p.y]),chinese.characters.map(p=>[p.id,p.x,p.y]));
-  assert.deepEqual(englishDemo.relations.map(r=>[r.id,r.source,r.target,r.kind,r.directed]),chinese.relations.map(r=>[r.id,r.source,r.target,r.kind,r.directed]));
+test('demo and practice data stay Chinese in either interface language',()=>{
+  const chinese=demoBoard(),other=demoBoard('en');
+  other.id=chinese.id;
+  assert.equal(chinese.name,'雾港档案');
+  assert.deepEqual(other,chinese);
+  assert.deepEqual(validateImport(exportBoard(other)),other);
+  assert.deepEqual(practiceBoard('en'),practiceBoard('zh'));
+  assert.equal(practiceBoard('en').characters[0].name,'小林');
 });
 test('tutorial dismissal is persistent and independent of graph data',()=>{
   const storage=memory();storage.setItem('relation-net:v1','original');
