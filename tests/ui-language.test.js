@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import * as i18n from '../dist/js/i18n.js';
 import * as tutorial from '../dist/js/tutorial.js';
+import * as avatar from '../dist/js/avatar.js';
 import * as model from '../dist/js/model.js';
 import * as demoMigration from '../dist/js/demo-migration.js';
 import * as icons from '../dist/js/icons.js';
@@ -32,7 +33,7 @@ const stored=new Map();stored.set(i18n.LANGUAGE_KEY,locale);if(savedBoard)stored
 const storage={getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)};
 if(seen)storage.setItem(tutorial.TUTORIAL_KEY,'done');
 const spotlight={visible:false,show(step,html){this.step=step;this.html=html;this.visible=true;},hide(){this.visible=false;},schedule(){}};
-const context={Spotlight:class{constructor(){return spotlight;}},...i18n,...tutorial,initializeLanguage:(_,language)=>i18n.initializeLanguage(storage,language??'zh-CN'),setLanguage:lang=>i18n.setLanguage(lang,storage),hasSeenTutorial:()=>tutorial.hasSeenTutorial(storage),markTutorialSeen:()=>tutorial.markTutorialSeen(storage),...model,...demoMigration,...icons,...layout,...cameraMath,...svgText,...factions,getFactionPositions:factions.factionPositions,hydrateIcons:()=>icons.hydrateIcons(document),e:model.escapeHtml,document,localStorage:{getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)},window:{innerWidth:1500,innerHeight:900,addEventListener(){}},ResizeObserver:class{observe(){}},requestAnimationFrame:fn=>{fn();return 1;},setTimeout:()=>1,clearTimeout(){},FormData:class{constructor(form){this.fields=form.fields??{};}get(k){return this.fields[k]??null;}has(k){return Object.hasOwn(this.fields,k);}getAll(k){return this.fields[k]??[];}},console};
+const context={Spotlight:class{constructor(){return spotlight;}},...i18n,...tutorial,initializeLanguage:(_,language)=>i18n.initializeLanguage(storage,language??'zh-CN'),setLanguage:lang=>i18n.setLanguage(lang,storage),hasSeenTutorial:()=>tutorial.hasSeenTutorial(storage),markTutorialSeen:()=>tutorial.markTutorialSeen(storage),...model,...avatar,...demoMigration,...icons,...layout,...cameraMath,...svgText,...factions,getFactionPositions:factions.factionPositions,hydrateIcons:()=>icons.hydrateIcons(document),e:model.escapeHtml,document,localStorage:{getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)},window:{innerWidth:1500,innerHeight:900,addEventListener(){}},ResizeObserver:class{observe(){}},requestAnimationFrame:fn=>{fn();return 1;},setTimeout:()=>1,clearTimeout(){},FormData:class{constructor(form){this.fields=form.fields??{};}get(k){return this.fields[k]??null;}has(k){return Object.hasOwn(this.fields,k);}getAll(k){return this.fields[k]??[];}},console};
 const source=fs.readFileSync(new URL('../dist/js/app.js',import.meta.url),'utf8').replace(/^import .*?;\n/gm,'');
 vm.createContext(context);
 vm.runInContext(source+`\nthis.api={changeLanguage,showTutorial,finishTutorial,personModal,boardModal,factionModal,help,tour:()=>({tutorialOpen,tutorialStep}),relationModal,cameraArea,toggleDetail,openMenu,closeMenu,resetSelection,view:()=>view,factionFilter:()=>factionFilter,factionPositions,fit,zoom,clearFocus,resetZoom,resizeViewport,camera:()=>({...camera}),tidyLayout,board,selectPerson,beginConnection,chooseConnectionTarget,cancelConnection,saveConnection,handleAction,undo,render,peek:()=>({connectionDraft,selectedId,recentRelationId,history:history.length}),draft:fields=>Object.assign(connectionDraft,fields)};`,context);
@@ -58,7 +59,7 @@ test('English UI keeps Chinese demo content in graph, details and editors',()=>{
   const content=[];
   const collect=value=>{if(typeof value==='string'&&/[\u4e00-\u9fff]/.test(value))content.push(value);else if(value&&typeof value==='object')Object.values(value).forEach(collect);};
   collect(a.board());
-  const assertDemoUI=html=>{html=html.replace(/(<[^>]*class="(?:monogram|detail-avatar|relation-mini)"[^>]*>)[^<]*/g,'$1');for(const text of content.sort((a,b)=>b.length-a.length))html=html.replaceAll(model.escapeHtml(text),'');assertEnglish(html);};
+  const assertDemoUI=html=>{html=html.replace(/(<[^>]*class="(?:monogram|detail-avatar|relation-mini|avatar-preview)"[^>]*>)[^<]*/g,'$1');for(const text of content.sort((a,b)=>b.length-a.length))html=html.replaceAll(model.escapeHtml(text),'');assertEnglish(html);};
   assert.equal(a.board().name,'雾港档案');
   assert.equal(a.board().characters[0].name,'林雾');
   assert.match(document.querySelector('#scene').innerHTML,/林雾/);
@@ -200,4 +201,27 @@ test('finishing during an asynchronous practice layout cannot overwrite the rest
 });
 test('returning users do not see the automatic guide',()=>{
   const {a,document}=app({seen:true});assert.equal(a.tour().tutorialOpen,false);assert.equal(document.querySelector('#modal').open,false);
+});
+
+
+test('avatars render throughout the atlas, survive reload, and can be removed, cancelled and undone',()=>{
+  const b=model.demoBoard();const portrait='data:image/png;base64,iVBORw0KGgo=';b.characters[0].avatar=portrait;
+  const {a,document,storage}=app({savedBoard:b});
+  assert.match(document.querySelector('#scene').innerHTML,/class="node-avatar"/);
+  assert.match(document.querySelector('#people-list').innerHTML,/class="avatar-image"/);
+  a.selectPerson('p1');assert.match(document.querySelector('#detail').innerHTML,/class="avatar-image"/);
+  a.selectPerson('p2');assert.match(document.querySelector('#detail').innerHTML,/class="avatar-image"/);
+  a.personModal('p1');let form=document.querySelector('#editor');
+  form.querySelector('[data-avatar-remove]').listeners.click();a.handleAction('close-modal');
+  assert.equal(a.board().characters[0].avatar,portrait);
+  a.personModal('p1');form=document.querySelector('#editor');
+  form.querySelector('[data-avatar-remove]').listeners.click();
+  form.fields={name:'林雾',alias:'LIN',role:'Keeper',color:'#708f87',notes:''};
+  form.listeners.submit({preventDefault(){},currentTarget:form});
+  assert.equal(Object.hasOwn(a.board().characters[0],'avatar'),false);
+  assert.doesNotMatch(document.querySelector('#scene').innerHTML,/class="node-avatar"/);
+  a.undo();assert.equal(a.board().characters[0].avatar,portrait);
+  const saved=JSON.parse(storage.getItem(model.STORAGE_KEY)).boards[0];
+  const reloaded=app({savedBoard:model.validateImport(model.exportBoard(saved))});
+  assert.equal(reloaded.a.board().characters[0].avatar,portrait);
 });

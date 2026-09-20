@@ -2,6 +2,25 @@
 export const LANGUAGE_KEY='relation-net:language';
 let language='zh';
 export const english={
+  "角色头像": "Character avatar",
+  "上传头像": "Upload avatar",
+  "移除头像": "Remove avatar",
+  "未上传时显示姓名的首字母或首个汉字。": "Without an image, the first letter or character of the name is shown.",
+  "PNG、JPG、WebP 或 GIF，最大 10 MB。": "PNG, JPG, WebP or GIF, up to 10 MB.",
+  "裁剪头像": "Crop avatar",
+  "拖动图片选择区域，调整缩放；也可用方向键移动。": "Drag the image and adjust the zoom. You can also use the arrow keys.",
+  "正在读取图片…": "Loading image\u2026",
+  "头像裁剪区域": "Avatar crop area",
+  "缩放": "Zoom",
+  "取消裁剪": "Cancel crop",
+  "使用此头像": "Use this avatar",
+  "请选择 PNG、JPG、WebP 或 GIF 图片。": "Choose a PNG, JPG, WebP or GIF image.",
+  "图片超过 10 MB，请选择较小的图片。": "This image exceeds 10 MB. Choose a smaller image.",
+  "无法读取图片，或图片像素过大。请换一张不超过 4000 万像素的图片。": "The image cannot be read or is too large. Choose another image with no more than 40 megapixels.",
+  "无法生成头像，请换一张图片重试。": "Could not create the avatar. Try another image.",
+  "请先使用或取消正在裁剪的头像。": "Apply or cancel the avatar crop before saving.",
+  "头像数据无效，请使用裁剪后的 PNG、JPG 或 WebP 图片。": "Invalid avatar data. Use a cropped PNG, JPG or WebP image.",
+
   "Relation Net · 关系档案": "Relation Net · Relationship Atlas",
   "Relation Net 首页": "Relation Net home",
   "人物关系档案 / NET": "CHARACTER ARCHIVES / NET",

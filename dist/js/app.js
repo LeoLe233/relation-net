@@ -1,4 +1,5 @@
 import {SCHEMA_VERSION,STORAGE_KEY,colors,CUSTOM_KIND,relationKind,prepareRelationKind,MAX_CHARACTER_FIELDS,prepareCharacterTemplate,validateCharacterAttributes,setCharacterTemplate,uid,clone,escapeHtml as e,demoBoard,createBoard,neighborhood,removeCharacter,exportBoard,validateImport,factionHull} from './model.js';
+import {avatarContent,avatarEditorMarkup,wireAvatarEditor} from './avatar.js';
 import {restoreChineseDemo} from './demo-migration.js';
 import {icon,hydrateIcons} from './icons.js';
 import {t,getLanguage,setLanguage,initializeLanguage,applyTranslations} from './i18n.js';
@@ -12,6 +13,7 @@ import {MIN_ZOOM,MAX_ZOOM,FOCUS_MIN_ZOOM,viewportCenter,centeredCamera,fittedCam
 
 const $=selector=>document.querySelector(selector);
 const graph=$('#graph'),scene=$('#scene'),canvas=$('#canvas-area'),modal=$('#modal');
+let activeAvatarEditor=null;
 let data,storageBlocked=false,loadWarning='';
 try {
   const raw=localStorage.getItem(STORAGE_KEY);
@@ -62,7 +64,7 @@ function renderSidebar(){
   $('#faction-list').innerHTML=b.factions.map(f=>`<button class="faction-row ${f.id===factionFilter?'active':''}" data-faction="${e(f.id)}"><span class="color-dot" style="--dot:${f.color}"></span><span>${e(short(f.name,11))}</span><span class="count">${f.members.length}</span></button>`).join('');
   const q=query.toLocaleLowerCase();let people=b.characters.filter(p=>[p.name,p.alias,p.role].some(s=>s.toLocaleLowerCase().includes(q)));
   if(factionFilter)people=people.filter(p=>b.factions.find(f=>f.id===factionFilter)?.members.includes(p.id));
-  $('#people-list').innerHTML=people.length?people.map(p=>`<button class="person-row ${p.id===selectedId||selected.has(p.id)?'active':''}" data-person="${e(p.id)}"><span class="initial" style="border-color:${p.color}">${e([...p.name][0])}</span><span>${e(short(p.name,7))}</span><span class="person-role">${e(p.role)}</span></button>`).join(''):`<div class="small-empty">${t("没有匹配的人物")}</div>`;
+  $('#people-list').innerHTML=people.length?people.map(p=>`<button class="person-row ${p.id===selectedId||selected.has(p.id)?'active':''}" data-person="${e(p.id)}"><span class="initial" style="border-color:${p.color}">${avatarContent(p)}</span><span>${e(short(p.name,7))}</span><span class="person-role">${e(p.role)}</span></button>`).join(''):`<div class="small-empty">${t("没有匹配的人物")}</div>`;
   const shownTypes=['cooperation','conflict',...(b.relations.some(r=>r.kind==='other')?['other']:[]),...(b.relationTypes??[]).filter(t=>b.relations.some(r=>r.kind===t.id)).map(t=>t.id)];
   $('.legend').innerHTML=shownTypes.map(id=>{const t=localizedKind(b,id);return `<span title="${e(t.name)}"><i style="--legend:${t.color}"></i>${e(t.name)}</span>`;}).join('');
   $('#board-title').textContent=b.name;$('#project-kind').textContent=t(b.kind);
@@ -94,7 +96,7 @@ function renderGraph(){
     edges+=`<path class="edge ${active?'':'dimmed'} ${r.id===recentRelationId?'recent-relation':''}" d="${p.d}" stroke="${col}" ${r.kind==='conflict'?'stroke-dasharray="5 5"':''} ${r.directed?'marker-end="url(#arrow)"':''}/>`;
     labels+=`<g class="edge-label ${active?'':'dimmed'} ${r.id===recentRelationId?'recent-relation':''}" data-relation="${e(r.id)}" tabindex="${active?'0':'-1'}" role="button" aria-label="${e(t('编辑关系：{source} {direction} {target}，{label}；类型：{kind}',{source:a.name,direction:t(r.directed?'到':'与'),target:z.name,label:r.label,kind:localizedKind(b,r.kind).name}))}" transform="translate(${p.mx},${p.my})"><rect class="touch-hit" x="${-Math.max(44,w)/2}" y="-22" width="${Math.max(44,w)}" height="44"/><rect x="${-w/2}" y="-10" width="${w}" height="20" rx="3"/>${graphText(r.label,-w/2+6,-10,w-12,20,'edge-copy')}</g>`;
   }
-  for(const [i,p] of b.characters.entries()){const isSelected=selectedId===p.id||selected.has(p.id);const recent=recentRelationId&&b.relations.some(r=>r.id===recentRelationId&&(r.source===p.id||r.target===p.id));nodes+=`<g class="node ${visible.has(p.id)?'':'dimmed'} ${isSelected?'selected':''} ${recent?'recent-endpoint':''}" data-node="${e(p.id)}" transform="translate(${p.x},${p.y})" tabindex="0" role="button" aria-label="${e(p.name)} · ${e(p.role)}${isSelected?t('，已选中'):''}" aria-pressed="${isSelected}"><rect class="card-body" x="-70" y="-61" width="140" height="124" rx="2"/><path fill="${p.color}" d="M-69 -60H69V-44H-69Z"/><text class="node-id" x="-60" y="-49">${String(i+1).padStart(3,'0')} / ARCHIVE</text><path d="M54 -57h10m-5-3v6" stroke="#ffffff80" stroke-width=".8"/><rect x="-61" y="-37" width="47" height="52" fill="${p.color}" opacity=".86"/><text class="monogram" x="-37" y="0" text-anchor="middle">${e([...p.name][0])}</text>${graphText(p.name,-4,-28,66,25,'node-name')}${graphText(p.alias,-4,-5,66,17,'node-alias')}<path d="M-60 26H60" stroke="#e2e7dc"/>${graphText(p.role||t('未填写身份'),-60,31,multi?104:120,20,'node-role')}<path class="selection-corner" d="M55 49H65V59Z"/>${multi?`<rect x="50" y="30" width="12" height="12" rx="2" fill="${selected.has(p.id)?'#cce47b':'#f0f3e9'}" stroke="#a2af88"/>${selected.has(p.id)?'<path d="m52 36 2 2 5-5" stroke="#516030" fill="none" stroke-width="1.5"/>':''}`:''}</g>`;}
+  for(const [i,p] of b.characters.entries()){const isSelected=selectedId===p.id||selected.has(p.id);const recent=recentRelationId&&b.relations.some(r=>r.id===recentRelationId&&(r.source===p.id||r.target===p.id));nodes+=`<g class="node ${visible.has(p.id)?'':'dimmed'} ${isSelected?'selected':''} ${recent?'recent-endpoint':''}" data-node="${e(p.id)}" transform="translate(${p.x},${p.y})" tabindex="0" role="button" aria-label="${e(p.name)} · ${e(p.role)}${isSelected?t('，已选中'):''}" aria-pressed="${isSelected}"><rect class="card-body" x="-70" y="-61" width="140" height="124" rx="2"/><path fill="${p.color}" d="M-69 -60H69V-44H-69Z"/><text class="node-id" x="-60" y="-49">${String(i+1).padStart(3,'0')} / ARCHIVE</text><path d="M54 -57h10m-5-3v6" stroke="#ffffff80" stroke-width=".8"/><rect x="-61" y="-35" width="47" height="47" fill="${p.color}" opacity=".86"/><text class="monogram" visibility="${p.avatar?'hidden':'visible'}" x="-37" y="0" text-anchor="middle">${e([...p.name][0])}</text>${p.avatar?`<image class="node-avatar" href="${e(p.avatar)}" x="-61" y="-35" width="47" height="47" preserveAspectRatio="xMidYMid meet"/>`:""}${graphText(p.name,-4,-28,66,25,'node-name')}${graphText(p.alias,-4,-5,66,17,'node-alias')}<path d="M-60 26H60" stroke="#e2e7dc"/>${graphText(p.role||t('未填写身份'),-60,31,multi?104:120,20,'node-role')}<path class="selection-corner" d="M55 49H65V59Z"/>${multi?`<rect x="50" y="30" width="12" height="12" rx="2" fill="${selected.has(p.id)?'#cce47b':'#f0f3e9'}" stroke="#a2af88"/>${selected.has(p.id)?'<path d="m52 36 2 2 5-5" stroke="#516030" fill="none" stroke-width="1.5"/>':''}`:''}</g>`;}
   scene.innerHTML=regions+edges+labels+'<g id="connection-preview" pointer-events="none"></g>'+nodes;fitGraphLabels(scene);updateCamera();updateConnectionPreview();
 }
 function factionPositions(){return getFactionPositions(board());}
@@ -117,7 +119,7 @@ function renderDetail(){
   if(connectionDraft){renderConnectionEditor();return;}
   const p=character(selectedId);const detail=$('#detail');detail.hidden=!p;canvas.classList.toggle('detail-open',!!p);if(!p)return;
   const b=board(),rels=b.relations.filter(r=>r.source===p.id||r.target===p.id),groups=b.factions.filter(f=>f.members.includes(p.id));
-  detail.innerHTML=`${detailHeader(t('{name} · 人物档案',{name:p.name}),'clear-selection')}<div class="detail-scroll"><div class="detail-identity"><div class="detail-avatar" style="background:${p.color}">${e([...p.name][0])}</div><div><h2>${e(p.name)}</h2><div class="alias">${e(p.alias)}</div><div class="detail-role">${e(p.role||t('暂无身份'))}</div></div></div><div class="detail-section"><div class="detail-heading">${t("所属阵营")}</div><div class="faction-badges">${groups.length?groups.map(f=>`<button class="badge" style="--badge:${f.color}" data-edit-faction="${e(f.id)}">${e(f.name)}</button>`).join(''):`<span class="detail-text">${t("暂未加入阵营")}</span>`}</div></div>${characterAttributeDetails(b,p)}<div class="detail-section"><div class="detail-heading">${t("人物笔记")}</div><p class="detail-text">${e(p.notes||t('暂无笔记。点击编辑档案，补充你对这个人物的观察。'))}</p></div><div class="detail-section"><div class="detail-heading">${t("直接关系 ")}<span>${String(rels.length).padStart(2,'0')} CONNECTIONS</span></div>${rels.length?rels.map(r=>{const other=character(r.source===p.id?r.target:r.source);return `<div class="relation-entry"><button data-person="${e(other.id)}"><span class="relation-mini" style="background:${other.color}">${e([...other.name][0])}</span><span class="relation-copy"><strong>${e(other.name)}</strong><small>${r.directed?(r.source===p.id?'→ ':'← '):'↔ '}${e(r.label)} <span class="relation-type" style="color:${localizedKind(b,r.kind).color}">${e(localizedKind(b,r.kind).name)}</span></small></span></button><button class="icon-btn" data-relation="${e(r.id)}" aria-label="${e(t('编辑与{name}的关系',{name:other.name}))}" title="${t("编辑关系")}">${icon('edit')}</button></div>`;}).join(''):`<p class="detail-text">${t("还没有关系，添加一条连接吧。")}</p>`}</div></div><div class="detail-bottom"><button class="button secondary" data-action="edit-person">${icon('edit')}${t('编辑档案')}</button><button class="button secondary" data-action="start-connection">${icon('plus')}${t('添加关系')}</button><button class="icon-btn danger-icon" data-action="delete-person" title="${t("删除人物")}" aria-label="${t("删除人物")}">${icon('trash')}</button></div>`;
+  detail.innerHTML=`${detailHeader(t('{name} · 人物档案',{name:p.name}),'clear-selection')}<div class="detail-scroll"><div class="detail-identity"><div class="detail-avatar" style="background:${p.color}">${avatarContent(p)}</div><div><h2>${e(p.name)}</h2><div class="alias">${e(p.alias)}</div><div class="detail-role">${e(p.role||t('暂无身份'))}</div></div></div><div class="detail-section"><div class="detail-heading">${t("所属阵营")}</div><div class="faction-badges">${groups.length?groups.map(f=>`<button class="badge" style="--badge:${f.color}" data-edit-faction="${e(f.id)}">${e(f.name)}</button>`).join(''):`<span class="detail-text">${t("暂未加入阵营")}</span>`}</div></div>${characterAttributeDetails(b,p)}<div class="detail-section"><div class="detail-heading">${t("人物笔记")}</div><p class="detail-text">${e(p.notes||t('暂无笔记。点击编辑档案，补充你对这个人物的观察。'))}</p></div><div class="detail-section"><div class="detail-heading">${t("直接关系 ")}<span>${String(rels.length).padStart(2,'0')} CONNECTIONS</span></div>${rels.length?rels.map(r=>{const other=character(r.source===p.id?r.target:r.source);return `<div class="relation-entry"><button data-person="${e(other.id)}"><span class="relation-mini" style="background:${other.color}">${avatarContent(other)}</span><span class="relation-copy"><strong>${e(other.name)}</strong><small>${r.directed?(r.source===p.id?'→ ':'← '):'↔ '}${e(r.label)} <span class="relation-type" style="color:${localizedKind(b,r.kind).color}">${e(localizedKind(b,r.kind).name)}</span></small></span></button><button class="icon-btn" data-relation="${e(r.id)}" aria-label="${e(t('编辑与{name}的关系',{name:other.name}))}" title="${t("编辑关系")}">${icon('edit')}</button></div>`;}).join(''):`<p class="detail-text">${t("还没有关系，添加一条连接吧。")}</p>`}</div></div><div class="detail-bottom"><button class="button secondary" data-action="edit-person">${icon('edit')}${t('编辑档案')}</button><button class="button secondary" data-action="start-connection">${icon('plus')}${t('添加关系')}</button><button class="icon-btn danger-icon" data-action="delete-person" title="${t("删除人物")}" aria-label="${t("删除人物")}">${icon('trash')}</button></div>`;
 }
 function renderOverlays(){
   const b=board();$('#empty-state').hidden=view==='people'?!!b.characters.length:!!b.factions.length;
@@ -331,6 +333,7 @@ function saveConnection(){
 }
 
 function modalShell(title,body,footer,submit){
+  activeAvatarEditor?.destroy();activeAvatarEditor=null;
   $('#modal-content').innerHTML=`<form id="editor"><div class="modal-header"><div><div class="eyebrow">RELATION NET / EDITOR</div><h2 id="modal-title">${e(title)}</h2></div><button type="button" class="icon-btn" data-action="close-modal" aria-label="${t("关闭")}">${icon('close')}</button></div><div class="modal-body">${body}</div><p id="form-error" class="form-error" hidden></p><div class="modal-footer">${footer??''}<button type="button" class="button secondary" data-action="close-modal">${t("取消")}</button><button type="submit" class="button primary">${t("保存")}</button></div></form>`;
   $('#editor').addEventListener('submit',event=>{event.preventDefault();try{submit(new FormData(event.currentTarget));}catch(error){$('#form-error').textContent=t(error.message);$('#form-error').hidden=false;}});
   if(!modal.open)modal.showModal();
@@ -373,13 +376,16 @@ function characterTemplateModal(){
 }
 function personModal(id){
   const p=character(id);if(!p&&board().characters.length>=500){toast(t('此图谱已达到 500 人物上限。'));return;}
-  const template=board().characterTemplate??[];
-  modalShell(p?t('编辑人物档案'):t('新增人物'),`<div class="fields-row">${textField(t('人物名称 *'),'name',p?.name,true)}${textField(t('别名 / 英文名'),'alias',p?.alias)}</div>${textField(t('身份 / 角色'),'role',p?.role,false,100)}${colorField(p?.color||colors[0])}${template.map(field=>textArea(e(field.name),e('attribute-'+field.id),attributeValue(p,field.id))).join('')}${textArea(t('人物笔记'),'notes',p?.notes)}`,null,f=>{
+  const template=board().characterTemplate??[];let avatarEditor;
+  modalShell(p?t('编辑人物档案'):t('新增人物'),`<div class="fields-row">${textField(t('人物名称 *'),'name',p?.name,true)}${textField(t('别名 / 英文名'),'alias',p?.alias)}</div>${avatarEditorMarkup(p)}${textField(t('身份 / 角色'),'role',p?.role,false,100)}${colorField(p?.color||colors[0])}${template.map(field=>textArea(e(field.name),e('attribute-'+field.id),attributeValue(p,field.id))).join('')}${textArea(t('人物笔记'),'notes',p?.notes)}`,null,f=>{
+    if(avatarEditor.pending)throw Error(t('请先使用或取消正在裁剪的头像。'));
     const next={name:required(f,'name',t('人物名称')),alias:get(f,'alias'),role:get(f,'role'),notes:get(f,'notes'),color:get(f,'color')};let newId=id;
     if(template.length||p?.attributes)next.attributes=validateCharacterAttributes(template,Object.fromEntries(template.map(field=>[field.id,get(f,'attribute-'+field.id)])));
-    mutate(()=>{if(p)Object.assign(p,next);else{const {x,y,k}=camera;newId=uid();board().characters.push({...next,id:newId,x:(canvas.clientWidth/2-x)/k+(Math.random()-.5)*60,y:(canvas.clientHeight/2-y)/k+(Math.random()-.5)*60});}});
+    mutate(()=>{if(avatarEditor.value)next.avatar=avatarEditor.value;if(p){Object.assign(p,next);if(!avatarEditor.value)delete p.avatar;}else{const {x,y,k}=camera;newId=uid();board().characters.push({...next,id:newId,x:(canvas.clientWidth/2-x)/k+(Math.random()-.5)*60,y:(canvas.clientHeight/2-y)/k+(Math.random()-.5)*60});}});
     modal.close();selectPerson(newId);toast(p?t('人物档案已更新'):t('已添加人物'));tutorialEvent('person-saved',newId);
   });
+  avatarEditor=wireAvatarEditor($('#editor'),p);
+  activeAvatarEditor=avatarEditor;
   if(p)tutorialEvent('edit-person');
 }
 function relationTypeFields(kind='cooperation',name=''){
@@ -525,6 +531,7 @@ function finishTutorial(){
   setSaveStatus(previous.saveKey||'已保存到此浏览器');
   if(previous.menuOpen&&isCompact())$('.mobile-nav-close').focus({preventScroll:true});else graph.focus({preventScroll:true});
 }
+modal.addEventListener('close',()=>{if(!modal.open){activeAvatarEditor?.destroy();activeAvatarEditor=null;}});
 modal.addEventListener('cancel',event=>{if(tutorialOpen){event.preventDefault();finishTutorial();}});
 function toggleSidebarSection(button){
   const panel=$('#'+button.getAttribute('aria-controls')),expanded=button.getAttribute('aria-expanded')==='true';
@@ -577,6 +584,7 @@ document.addEventListener('click',event=>{
   else if(el.dataset.deleteRelation){const id=el.dataset.deleteRelation;confirmDelete(t('删除关系'),t('确定删除这条关系吗？人物档案会保留。'),()=>{board().relations=board().relations.filter(r=>r.id!==id);});}
   else if(el.dataset.deleteFaction){const id=el.dataset.deleteFaction;confirmDelete(t('解散阵营'),t('确定解散这个阵营吗？成员人物与关系会保留。'),()=>{board().factions=board().factions.filter(f=>f.id!==id);});}
 });
+document.addEventListener('error',event=>{if(event.target?.matches?.('.avatar-image,.node-avatar')){event.target.closest('[data-node]')?.querySelector('.monogram')?.removeAttribute('visibility');event.target.remove();}},true);
 $('#search').addEventListener('input',event=>{query=event.target.value;if(!connectionDraft)selectedId=null;render();});
 $('#import-file').addEventListener('change',async event=>{await importFile(event.target.files[0]);event.target.value='';});
 document.addEventListener('focusin',event=>{

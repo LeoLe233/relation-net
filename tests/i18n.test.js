@@ -20,7 +20,7 @@ test('language preference overrides browser language and works without storage',
   assert.equal(setLanguage('unknown',storage),'en');
 });
 test('every explicit UI, tutorial, and validation message has an English translation',()=>{
-  const app=fs.readFileSync(new URL('../dist/js/app.js',import.meta.url),'utf8');
+  const app=['app','avatar'].map(name=>fs.readFileSync(new URL('../dist/js/'+name+'.js',import.meta.url),'utf8')).join('\n');
   const html=fs.readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
   const model=fs.readFileSync(new URL('../dist/js/model.js',import.meta.url),'utf8');
   const keys=[...app.matchAll(/\bt\(['"]([^'"\n]+)['"]/g)].map(m=>m[1]);

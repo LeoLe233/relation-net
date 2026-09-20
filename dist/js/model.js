@@ -1,5 +1,10 @@
 export const SCHEMA_VERSION = 1;
 export const STORAGE_KEY = 'relation-net:v1';
+export const MAX_AVATAR_LENGTH = 128*1024;
+export function validateAvatar(value){
+  if(typeof value!=='string'||value.length>MAX_AVATAR_LENGTH||!/^data:image\/(?:png|jpeg|webp);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)||value.endsWith(','))throw Error('头像数据无效，请使用裁剪后的 PNG、JPG 或 WebP 图片。');
+  return value;
+}
 export const colors = ['#708f87','#ad8269','#7b86a4','#a08da4','#8b9673','#729aaa'];
 export const relationKinds = { cooperation: {name:'合作',color:'#748d86'}, conflict: {name:'冲突',color:'#b08371'}, other: {name:'其他',color:'#7e879b'} };
 export const CUSTOM_KIND = '__custom__';
@@ -99,7 +104,7 @@ export function validateImport(input) {
   const unique=arr=>{const ids=arr.map(x=>string(x.id,100,true));if(new Set(ids).size!==ids.length)fail('文件包含重复的 ID。');return new Set(ids);};
   const people=unique(b.characters);unique(b.relations);unique(b.factions);
   const characterTemplate=b.characterTemplate===undefined?undefined:prepareCharacterTemplate(b.characterTemplate);
-  const characters=b.characters.map(p=>{if(!Number.isFinite(p.x)||!Number.isFinite(p.y)||Math.abs(p.x)>100000||Math.abs(p.y)>100000)fail('文件包含无效人物坐标。');return {id:p.id,name:string(p.name,60,true),alias:string(p.alias??'',60),role:string(p.role??'',100),notes:string(p.notes??'',10000),color:color(p.color),x:p.x,y:p.y,...(p.attributes===undefined?{}:{attributes:validateCharacterAttributes(characterTemplate??[],p.attributes)})};});
+  const characters=b.characters.map(p=>{if(!Number.isFinite(p.x)||!Number.isFinite(p.y)||Math.abs(p.x)>100000||Math.abs(p.y)>100000)fail('文件包含无效人物坐标。');return {id:p.id,name:string(p.name,60,true),alias:string(p.alias??'',60),role:string(p.role??'',100),notes:string(p.notes??'',10000),color:color(p.color),x:p.x,y:p.y,...(p.avatar===undefined?{}:{avatar:validateAvatar(p.avatar)}),...(p.attributes===undefined?{}:{attributes:validateCharacterAttributes(characterTemplate??[],p.attributes)})};});
   let relationTypes;
   if(b.relationTypes!==undefined){
     if(!Array.isArray(b.relationTypes)||b.relationTypes.length>100)fail('自定义关系类型最多支持 100 项。');
