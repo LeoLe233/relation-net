@@ -8,7 +8,29 @@
 
 仓库附带 [故事转关系图 skill](skills/story-to-relation-net/SKILL.md)。把**故事文本 + `SKILL.md`** 一起交给支持长文本或附件的 AI，即可让它提取人物、别名、有向／无向关系和阵营，输出符合 Relation Net v1 格式的 JSON；导入应用后就会显示为可编辑的关系图。
 
-### 使用方法
+## 运行
+
+这是完整离线源码版，包含页面、样式、脚本和原创演示数据。需要事先安装 Python 3（仅用于启动本地静态服务器）。先完整解压 ZIP：
+
+- Windows：双击 `start-windows.bat`。
+- macOS：运行 `start-macos.command`；若系统不允许直接运行，在终端执行下面的命令。
+- Linux / 通用方式：
+
+```sh
+python3 start-local.py
+```
+
+启动后会自动打开 `http://127.0.0.1:8765/`，使用期间保留启动窗口。服务只监听本机，不向局域网开放。每次使用相同的地址和浏览器，才能继续读取之前的图谱；关闭启动窗口不会删除数据。可用 `--no-browser` 关闭自动打开浏览器。
+
+也可以自行启动静态服务器：
+
+```sh
+python3 -m http.server 8080 --directory dist
+```
+
+然后打开 `http://localhost:8080`。Windows 也可使用 `py -m http.server 8080 --directory dist`。可以改用任意静态服务器；ES 模块需通过 HTTP 服务加载，请勿直接双击 HTML 文件。
+
+### Skill使用方法
 
 1. 打开上面的技能文件，下载 `SKILL.md` 或复制其完整内容。
 2. 在 AI 对话中附上该文件和故事正文，说明要覆盖的章节。技能正文包含完整格式，不需要 AI 能运行代码，也不依赖某个特定平台。
@@ -43,27 +65,6 @@ python3 skills/story-to-relation-net/scripts/validate_graph.py 你的图谱.rela
 
 Windows 可将 `python3` 换成 `py`。显示 `VALID` 表示通过技能的格式与引用检查；`WARNING` 提示需要复核的证据或布局问题。校验器不验证故事理解是否正确，AI 输出仍需审阅。它也不会调用 AI；生成步骤在你选择的 AI 服务中完成，Relation Net 本身不需要 API 密钥。
 
-## 运行
-
-这是完整离线源码版，包含页面、样式、脚本和原创演示数据。需要事先安装 Python 3（仅用于启动本地静态服务器）。先完整解压 ZIP：
-
-- Windows：双击 `start-windows.bat`。
-- macOS：运行 `start-macos.command`；若系统不允许直接运行，在终端执行下面的命令。
-- Linux / 通用方式：
-
-```sh
-python3 start-local.py
-```
-
-启动后会自动打开 `http://127.0.0.1:8765/`，使用期间保留启动窗口。服务只监听本机，不向局域网开放。每次使用相同的地址和浏览器，才能继续读取之前的图谱；关闭启动窗口不会删除数据。可用 `--no-browser` 关闭自动打开浏览器。
-
-也可以自行启动静态服务器：
-
-```sh
-python3 -m http.server 8080 --directory dist
-```
-
-然后打开 `http://localhost:8080`。Windows 也可使用 `py -m http.server 8080 --directory dist`。可以改用任意静态服务器；ES 模块需通过 HTTP 服务加载，请勿直接双击 HTML 文件。
 
 ## 支持功能
 
