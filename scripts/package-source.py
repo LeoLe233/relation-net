@@ -5,7 +5,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 root = Path(__file__).resolve().parents[1]
 target = root / 'dist' / 'relation-net-source.zip'
 files = [root / name for name in ['README.md', 'LICENSE', 'package.json', '.gitignore', 'start-local.py', 'start-windows.bat', 'start-macos.command']]
-for directory in ['dist', 'tests', 'scripts']:
+for directory in ['dist', 'tests', 'scripts', 'skills']:
     files.extend(path for path in (root / directory).rglob('*')
                  if path.is_file() and path != target and '__pycache__' not in path.parts
                  and '.openai' not in path.parts and path.suffix not in {'.pyc', '.zip', '.tar', '.gz'})

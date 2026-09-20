@@ -4,6 +4,45 @@
 
 **原生 HTML + CSS + JavaScript + SVG，零运行依赖，无后端、无数据库、无构建步骤。**
 
+## 从故事生成关系图：AI Skill
+
+仓库附带 [故事转关系图 skill](skills/story-to-relation-net/SKILL.md)。把**故事文本 + `SKILL.md`** 一起交给支持长文本或附件的 AI，即可让它提取人物、别名、有向／无向关系和阵营，输出符合 Relation Net v1 格式的 JSON；导入应用后就会显示为可编辑的关系图。
+
+### 使用方法
+
+1. 打开上面的技能文件，下载 `SKILL.md` 或复制其完整内容。
+2. 在 AI 对话中附上该文件和故事正文，说明要覆盖的章节。技能正文包含完整格式，不需要 AI 能运行代码，也不依赖某个特定平台。
+3. 请 AI 按技能生成 `.relation-net.json` 文件。如果只能输出文字，将完整 JSON 保存为 UTF-8 文件；不包含 Markdown 的代码围栏或额外解释。
+4. 打开 Relation Net，在左侧底部点击“导入”，选择该文件。导入会新增独立图谱，不覆盖现有图谱。
+5. 查看人物、关系与证据笔记，需要时点击“一键整理”调整初始布局，再手动修正 AI 的理解。
+
+可直接复制这个请求，附上 `SKILL.md` 和故事：
+
+```text
+请按附件 SKILL.md，把我提供的故事生成 Relation Net v1 关系图 JSON。
+只使用所提供文本，合并有依据的别名，保留关系方向，并在笔记中记录依据。
+请输出可下载的 故事人物关系.relation-net.json；若不能创建文件，只输出完整 JSON。
+```
+
+在已安装该技能、支持 `$技能名` 调用的 AI 环境中，也可直接使用 `$story-to-relation-net` 并附上故事。若只有普通聊天界面，直接上传或粘贴技能正文即可。
+
+需要续写图谱时，同时提供旧 JSON 和新章节，并明确要求“保留原有信息，合并新章节，输出完整图谱”。技能会要求保留已有 ID、布局、自定义关系类型及角色属性；导入合并结果仍会创建一张新图谱。需要“亲情”等独立关系类型，或“特殊能力”等角色模板字段时，也可在请求中说明，内容仍应有故事依据。
+
+### 示例与可选校验
+
+仓库提供一组原创示例，可先直接导入 JSON 体验，也可把故事和 skill 交给 AI 重新生成：
+
+- [示例故事](skills/story-to-relation-net/examples/story.txt)
+- [对应的可导入 JSON](skills/story-to-relation-net/examples/story.relation-net.json)
+
+如果已安装 Python 3，可在仓库根目录运行附带的格式校验器，无需安装额外依赖：
+
+```sh
+python3 skills/story-to-relation-net/scripts/validate_graph.py 你的图谱.relation-net.json
+```
+
+Windows 可将 `python3` 换成 `py`。显示 `VALID` 表示通过技能的格式与引用检查；`WARNING` 提示需要复核的证据或布局问题。校验器不验证故事理解是否正确，AI 输出仍需审阅。它也不会调用 AI；生成步骤在你选择的 AI 服务中完成，Relation Net 本身不需要 API 密钥。
+
 ## 运行
 
 这是完整离线源码版，包含页面、样式、脚本和原创演示数据。需要事先安装 Python 3（仅用于启动本地静态服务器）。先完整解压 ZIP：
@@ -106,6 +145,13 @@ tests/
   character-template.test.js  角色模板与自定义属性完整性测试
 scripts/
   package-source.py   生成不含宿主配置的便携源码包
+skills/
+  story-to-relation-net/
+    SKILL.md           故事转图谱指令与完整 JSON 格式
+    agents/openai.yaml 技能显示信息
+    assets/icon.svg    技能图标
+    scripts/validate_graph.py  无依赖的 Python 格式校验器
+    examples/          原创故事与对应的可导入 JSON
 README.md
 LICENSE
 package.json

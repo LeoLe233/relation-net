@@ -1,0 +1,88 @@
+{
+  "format": "relation-net",
+  "version": 1,
+  "board": {
+    "id": "board-signal-example",
+    "name": "观测站的信号",
+    "kind": "书籍",
+    "description": "原创示例；范围：所提供的第一章。展示别名合并、有向与无向关系、阵营、自定义关系类型和特殊能力属性。",
+    "relationTypes": [
+      { "id": "type-family", "name": "亲情", "color": "#8874a6" }
+    ],
+    "characterTemplate": [
+      { "id": "field-ability", "name": "特殊能力" }
+    ],
+    "characters": [
+      {
+        "id": "p001",
+        "name": "许舟",
+        "alias": "阿舟",
+        "role": "观测员",
+        "notes": "观测站成员。阿舟是许舟的别名；陆岚是他的姐姐。依据：第一章第 1、3 段。",
+        "color": "#708f87",
+        "x": 240,
+        "y": 240,
+        "attributes": { "field-ability": "操纵雾气" }
+      },
+      {
+        "id": "p002",
+        "name": "沈遥",
+        "alias": "",
+        "role": "观测员",
+        "notes": "观测站成员，与许舟共事。依据：第一章第 1 段。",
+        "color": "#708f87",
+        "x": 480,
+        "y": 240,
+        "attributes": { "field-ability": "感知远处的声音" }
+      },
+      {
+        "id": "p003",
+        "name": "陆岚",
+        "alias": "",
+        "role": "码头领航员",
+        "notes": "许舟的姐姐，未加入观测站。为调查提供航线不代表加入组织。依据：第一章第 3 段。",
+        "color": "#ad8269",
+        "x": 240,
+        "y": 480
+      }
+    ],
+    "relations": [
+      {
+        "id": "r001",
+        "source": "p001",
+        "target": "p002",
+        "label": "共同调查",
+        "kind": "cooperation",
+        "directed": false,
+        "notes": "依据：两人约定共同调查异常无线电信号；位置：第一章第 2 段。"
+      },
+      {
+        "id": "r002",
+        "source": "p003",
+        "target": "p001",
+        "label": "姐弟",
+        "kind": "type-family",
+        "directed": false,
+        "notes": "依据：陆岚是许舟的姐姐；位置：第一章第 3 段。"
+      },
+      {
+        "id": "r003",
+        "source": "p003",
+        "target": "p001",
+        "label": "承诺提供航线",
+        "kind": "cooperation",
+        "directed": true,
+        "notes": "依据：许舟请求陆岚为调查提供航线，陆岚答应；位置：第一章第 3 段。"
+      }
+    ],
+    "factions": [
+      {
+        "id": "f001",
+        "name": "观测站",
+        "description": "许舟与沈遥明确为观测站成员；陆岚未加入，不列入成员。依据：第一章第 1、3 段。",
+        "color": "#708f87",
+        "members": ["p001", "p002"]
+      }
+    ]
+  }
+}
