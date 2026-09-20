@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+  <meta name="theme-color" content="#1d2224">
+  <meta name="description" content="以人物、关系与阵营，绘制属于你的关系图谱。轻量、本地保存、自由迁移。" data-i18n-content="以人物、关系与阵营，绘制属于你的关系图谱。轻量、本地保存、自由迁移。">
+  <title>Relation Net · 关系档案</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 32 32&#x27;%3E%3Crect width=&#x27;32&#x27; height=&#x27;32&#x27; rx=&#x27;5&#x27; fill=&#x27;%231d2224&#x27;/%3E%3Cpath d=&#x27;M8 9L24 16L10 25Z&#x27; fill=&#x27;none&#x27; stroke=&#x27;%23d9ef74&#x27; stroke-width=&#x27;2&#x27;/%3E%3Cg fill=&#x27;%23d9ef74&#x27;%3E%3Ccircle cx=&#x27;8&#x27; cy=&#x27;9&#x27; r=&#x27;3&#x27;/%3E%3Ccircle cx=&#x27;24&#x27; cy=&#x27;16&#x27; r=&#x27;3&#x27;/%3E%3Ccircle cx=&#x27;10&#x27; cy=&#x27;25&#x27; r=&#x27;3&#x27;/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar" class="sidebar" aria-label="图谱导航" data-i18n-aria-label="图谱导航"><button class="icon-btn mobile-nav-close" data-action="close-menu" title="关闭导航" aria-label="关闭导航" data-i18n-title="关闭导航" data-i18n-aria-label="关闭导航"><span data-icon="close"></span></button>
+    <a class="brand" href="./" aria-label="Relation Net 首页" data-i18n-aria-label="Relation Net 首页"><span class="brand-mark" aria-hidden="true">◈</span><span>RELATION<span class="brand-small"><span data-i18n="人物关系档案 / NET">人物关系档案 / NET</span></span></span></a>
+    <div class="sidebar-sections">
+      <section class="side-section workspace-section">
+        <div class="section-heading"><button class="section-toggle" data-sidebar-toggle="boards" aria-expanded="true" aria-controls="boards-content" title="折叠工作空间" data-i18n-title="折叠工作空间"><span><span data-i18n="工作空间">工作空间</span></span><span data-icon="chevron"></span></button></div>
+        <div id="boards-content" class="section-content"><div id="board-list"></div><button class="side-new" data-action="new-board"><span>＋</span><span data-i18n="新建图谱">新建图谱</span></button></div>
+      </section>
+      <section class="side-section factions-section">
+        <div class="section-heading"><button class="section-toggle" data-sidebar-toggle="factions" aria-expanded="true" aria-controls="factions-content" title="折叠阵营" data-i18n-title="折叠阵营"><span><span data-i18n="阵营">阵营</span></span><span id="faction-count" class="mono"></span><span data-icon="chevron"></span></button></div>
+        <div id="factions-content" class="section-content"><button class="faction-row all-factions active" data-action="all-factions"><span class="color-dot all-dot"></span><span><span data-i18n="全部人物">全部人物</span></span><span id="all-count" class="count"></span></button><div id="faction-list"></div></div>
+      </section>
+      <section class="side-section people-section">
+        <div class="section-heading"><button class="section-toggle" data-sidebar-toggle="people" aria-expanded="true" aria-controls="people-content" title="折叠人物档案" data-i18n-title="折叠人物档案"><span><span data-i18n="人物档案">人物档案</span></span><span data-icon="chevron"></span></button><button class="icon-btn small" data-action="add-person" title="新增人物" aria-label="新增人物" data-i18n-title="新增人物" data-i18n-aria-label="新增人物">＋</button></div>
+        <div id="people-content" class="section-content people-content"><button class="character-template-button" data-action="edit-template"><span data-icon="edit"></span><span data-i18n="编辑角色模板">编辑角色模板</span></button><label class="search-box"><span data-icon="search"></span><input id="search" type="search" placeholder="查找人物…" autocomplete="off" aria-label="查找人物" data-i18n-placeholder="查找人物…" data-i18n-aria-label="查找人物"></label><div id="people-list" class="people-list"></div></div>
+      </section>
+    </div>
+    <div class="sidebar-footer"><div class="save-row"><span data-icon="database"></span><span id="save-status" role="status"><span data-i18n="保存在此浏览器">保存在此浏览器</span></span></div><div class="file-actions"><button data-action="import" title="导入 JSON 图谱" data-i18n-title="导入 JSON 图谱"><span data-icon="upload"></span><span data-i18n="导入">导入</span></button><button data-action="export" title="导出当前图谱为 JSON" data-i18n-title="导出当前图谱为 JSON"><span data-icon="download"></span><span data-i18n="导出">导出</span></button><button id="language-toggle" data-action="language" title="切换语言" aria-label="切换语言" data-i18n-title="切换语言" data-i18n-aria-label="切换语言" lang="en">ENG</button><button data-action="help" title="操作指南" aria-label="操作指南" data-i18n-title="操作指南" data-i18n-aria-label="操作指南"><span data-icon="help"></span></button></div></div>
+  </aside>
+  <main class="workspace">
+    <header class="topbar"><button class="icon-btn mobile-menu" data-action="menu" aria-label="打开导航" aria-controls="sidebar" aria-expanded="false" data-i18n-aria-label="打开导航"><span data-icon="menu"></span></button><div class="project-title"><div class="project-kicker"><span id="project-kind"></span></div><button id="board-title" data-action="edit-board" title="编辑图谱信息" data-i18n-title="编辑图谱信息"></button></div><div class="top-actions"><button id="undo" class="button quiet" data-action="undo" aria-label="撤销上一步" disabled title="撤销上一步 · Ctrl/⌘ Z" data-i18n-aria-label="撤销上一步" data-i18n-title="撤销上一步 · Ctrl/⌘ Z"><span data-icon="undo"></span><span class="desktop-label"><span data-i18n="撤销">撤销</span></span></button><button class="button secondary" data-action="add-relation" aria-label="添加关系" title="添加关系" data-i18n-aria-label="添加关系" data-i18n-title="添加关系"><span data-icon="link"></span><span class="desktop-label"><span data-i18n="添加关系">添加关系</span></span></button><button class="button primary" data-action="add-person" aria-label="新增人物" title="新增人物" data-i18n-aria-label="新增人物" data-i18n-title="新增人物"><span data-icon="plus"></span><span class="desktop-label"><span data-i18n="新增人物">新增人物</span></span></button></div></header>
+    <div class="viewbar"><div class="view-tabs" role="tablist" aria-label="图谱视图" data-i18n-aria-label="图谱视图"><button role="tab" aria-selected="true" data-view="people"><span data-icon="network"></span><span data-i18n="关系图谱">关系图谱</span></button><button role="tab" aria-selected="false" data-view="factions"><span data-icon="layers"></span><span data-i18n="阵营视图">阵营视图</span></button></div><div class="viewbar-right"><button id="auto-layout" class="text-button" data-action="auto-layout" title="整理整张图谱，减少重叠与交叉；可撤销" data-i18n-title="整理整张图谱，减少重叠与交叉；可撤销"><span data-icon="layout"></span><span id="auto-layout-label"><span data-i18n="一键整理">一键整理</span></span></button><button id="touch-move-toggle" class="text-button touch-move-toggle" data-action="touch-move" aria-pressed="false" title="开启后，单指可拖动人物或阵营" data-i18n-title="开启后，单指可拖动人物或阵营"><span data-icon="move"></span><span><span data-i18n="移动节点">移动节点</span></span></button><button id="multi-toggle" class="text-button" data-action="multi" aria-pressed="false"><span data-icon="select"></span><span data-i18n="多选">多选</span></button><span class="divider"></span><div class="stats" id="graph-stats"></div></div></div>
+    <div class="canvas-area" id="canvas-area">
+      <div class="canvas-caption"><span class="cross">＋</span><div><span class="eyebrow dark">CHARACTER NETWORK</span></div></div>
+      <div id="filter-chip" class="filter-chip" hidden></div>
+      <svg id="graph" xmlns="http://www.w3.org/2000/svg" tabindex="0" aria-label="人物关系图。点击人物查看关系，拖动人物调整位置，拖动空白平移。" data-i18n-aria-label="人物关系图。点击人物查看关系，拖动人物调整位置，拖动空白平移。"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="context-stroke" stroke-width="1.5"></path></marker></defs><g id="scene"></g></svg>
+      <div id="empty-state" class="empty-state" hidden><span class="empty-symbol">◈</span><h2><span data-i18n="故事，从一个人物开始">故事，从一个人物开始</span></h2><p><span data-i18n="添加人物，再用关系将他们连接起来。">添加人物，再用关系将他们连接起来。</span></p><button class="button primary" data-action="add-person"><span data-i18n="＋ 添加第一个人物">＋ 添加第一个人物</span></button></div>
+      <div id="selection-bar" class="selection-bar" hidden></div>
+      <div id="focus-bar" class="focus-bar" hidden></div>
+      <div id="connection-bar" class="connection-bar" role="status" aria-live="polite" hidden></div>
+      <aside id="detail" class="detail-panel" aria-label="人物详情" hidden data-i18n-aria-label="人物详情"></aside>
+      <div id="touch-hint" class="touch-hint" aria-live="polite"><span data-i18n="单指平移 · 双指缩放 · 点按查看">单指平移 · 双指缩放 · 点按查看</span></div>
+      <div id="canvas-controls" class="canvas-bottom"><div class="canvas-hint"><span data-icon="mouse"></span><span><span data-i18n="拖动平移">拖动平移</span><i>·</i><span data-i18n="滚轮缩放">滚轮缩放</span><i>·</i><span data-i18n="Shift + 点击多选">Shift + 点击多选</span></span></div><div class="zoom-controls"><button class="icon-btn" data-action="zoom-out" title="缩小" aria-label="缩小" data-i18n-title="缩小" data-i18n-aria-label="缩小">−</button><button id="zoom-level" class="mono" data-action="zoom-reset" title="恢复 100% 大小" aria-label="恢复 100% 大小" data-i18n-title="恢复 100% 大小" data-i18n-aria-label="恢复 100% 大小">100%</button><button class="icon-btn" data-action="zoom-in" title="放大" aria-label="放大" data-i18n-title="放大" data-i18n-aria-label="放大">＋</button><span class="divider"></span><button class="icon-btn" data-action="fit" title="适应画布" aria-label="适应画布" data-i18n-title="适应画布" data-i18n-aria-label="适应画布"><span data-icon="fit"></span></button></div></div>
+      <div class="legend"><span><i style="--legend:#748d86"></i><span data-i18n="合作">合作</span></span><span><i style="--legend:#b08371"></i><span data-i18n="冲突">冲突</span></span><span><i style="--legend:#7e879b"></i><span data-i18n="其他关系">其他关系</span></span></div>
+    </div>
+  </main>
+</div>
+<div id="sidebar-scrim" data-action="close-menu" hidden></div>
+<dialog id="modal" aria-labelledby="modal-title"><div id="modal-content"></div></dialog>
+<input id="import-file" type="file" accept=".json,application/json" hidden>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

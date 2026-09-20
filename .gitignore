@@ -1,0 +1,9 @@
+.sites-runtime/
+.env
+.DS_Store
+node_modules/
+.openai/
+__pycache__/
+*.pyc
+*.relation-net.json
+backups/
